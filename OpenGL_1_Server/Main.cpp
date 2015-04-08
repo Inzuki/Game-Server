@@ -3,6 +3,7 @@
 #include <SFML/Network.hpp>
 #include <iostream>
 #include <cstdlib>
+#include <stdio.h>
 
 #define PLAYERS 8
 
@@ -49,8 +50,8 @@ int main(){
 
 		// handle messages
 		switch(buffer[0]){
-			// when a user connects
-			case '0':{
+			// when a client connects
+			case '+':{
 				// insert the client into the players struct
 				int i = 0;
 				for(i = 0; i < PLAYERS; i++){
@@ -76,7 +77,7 @@ int main(){
 				sprintf(sendBuffer, "0%i", i);
 				socket.send(sendBuffer, sizeof(sendBuffer), client, clientPort);
 			}break;
-			// when a user disconnects
+			// when a client disconnects
 			case '-':{
 				int id = atoi(buff);
 
@@ -86,6 +87,20 @@ int main(){
 				sprintf(players[id].name, "");
 				players[id].port = 0;
 				players[id].ip   = sf::IpAddress::None;
+			}break;
+			// when a client begins moving
+			case 'm':{
+				int id = 0;
+				char key;
+
+				sscanf(buff, "%i,%c,", &id, &key);
+
+				printf("%s has started moving.\n", players[id].name);
+			}break;
+
+			// when the packet received from the client is unknown
+			default:{
+				printf("UNKNOWN PACKET RECEIVED - SIGNAL %c, INFO:\n-> %s\n", buffer[0], buff);
 			}break;
 		}
 	}
