@@ -1,6 +1,24 @@
 ﻿#define _CRT_SECURE_NO_WARNINGS
 
+#define BLACK		  0
+#define BLUE		  1
+#define GREEN		  2
+#define CYAN		  3
+#define RED			  4
+#define MAGENTA		  5
+#define BROWN		  6
+#define LIGHT_GRAY	  7
+#define DARK_GRAY	  8
+#define LIGHT_BLUE	  9
+#define LIGHT_GREEN	  10
+#define LIGHT_CYAN	  11
+#define LIGHT_RED	  12
+#define LIGHT_MAGENTA 13
+#define YELLOW		  14
+#define WHITE		  15
+
 #include <SFML/Network.hpp>
+#include <Windows.h>
 #include <iostream>
 #include <cstdlib>
 #include <stdio.h>
@@ -11,9 +29,14 @@ struct Player {
 	char name[1024];
 	unsigned short port;
 	sf::IpAddress ip;
+	float x, y, z;
 };
 
 int main(){
+	HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+	//for(int colour = 0x00; colour <= 0x10; colour ++)
+	//	SetConsoleTextAttribute(h, colour), printf("Color: %i\n", colour);
+
 	const unsigned short port = 50001;
 
 	printf("Setting up server on port %i...\n\n", port);
@@ -50,9 +73,9 @@ int main(){
 
 		// handle messages
 		switch(buffer[0]){
-			// when a client connects
+			// when a player connects
 			case '+':{
-				// insert the client into the players struct
+				// insert the player into the players struct
 				int i = 0;
 				for(i = 0; i < PLAYERS; i++){
 					// find the first empty player slot
@@ -62,47 +85,55 @@ int main(){
 						players[i].ip   = client;
 
 						// display client's information
-						printf("+ %s (%s on port %i) has connected (with ID %i).\n",
+						SetConsoleTextAttribute(h, LIGHT_GREEN),
+						printf("%s (%s on port %i) has connected (with ID %i).\n",
 							   players[i].name,
 							   players[i].ip.toString().c_str(),
 							   players[i].port,
 							   i
 						);
 
+						// let the player know they successfully connected and tell them their ID
+						sprintf(sendBuffer, "y%i", i);
+						socket.send(sendBuffer, sizeof(sendBuffer), client, clientPort);
+
+						break;
 						break; // break out, don't want to fill every player slot with one player's information
 					}
 				}
 
-				// let the client know they successfully connected and tell them their ID
-				sprintf(sendBuffer, "0%i", i);
-				socket.send(sendBuffer, sizeof(sendBuffer), client, clientPort);
+				for(int j = 0; j < PLAYERS; j++){
+					if(j != i){
+						if(players[j].ip != sf::IpAddress::None){
+							// inform the other players connected that a new player has connected
+							sprintf(sendBuffer, "a%i,%s", i, players[i].name);
+							socket.send(sendBuffer, sizeof(sendBuffer), players[j].ip, players[j].port);
+
+							// inform the player of other connected players
+							sprintf(sendBuffer, "A%i,%s", j, players[j].name);
+							socket.send(sendBuffer, sizeof(sendBuffer), client, clientPort);
+						}
+					}
+				}
 			}break;
-			// when a client disconnects
+			// when a player disconnects
 			case '-':{
-				int id = atoi(buff);
+				SetConsoleTextAttribute(h, LIGHT_RED),
+				printf("%s has disconnected.\n", players[atoi(buff)].name);
 
-				printf("- %s has disconnected.\n", players[id].name);
-
-				// clear the client's information
-				sprintf(players[id].name, "");
-				players[id].port = 0;
-				players[id].ip   = sf::IpAddress::None;
-			}break;
-			// when a client begins moving
-			case 'm':{
-				int id = 0;
-				char key;
-
-				sscanf(buff, "%i,%c,", &id, &key);
-
-				printf("%s has started moving.\n", players[id].name);
+				// clear the player's information
+				sprintf(players[atoi(buff)].name, "");
+				players[atoi(buff)].port = 0;
+				players[atoi(buff)].ip   = sf::IpAddress::None;
 			}break;
 
-			// when the packet received from the client is unknown
+			// when the packet received from the player is unknown
 			default:{
 				printf("UNKNOWN PACKET RECEIVED - SIGNAL %c, INFO:\n-> %s\n", buffer[0], buff);
 			}break;
 		}
+
+		SetConsoleTextAttribute(h, WHITE);
 	}
 
 	system("PAUSE");
