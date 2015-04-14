@@ -143,8 +143,6 @@ int main(){
 				sscanf(buff, "%i,%f,%f,%f", &id, &x, &y, &z);
 				players[id].x = x; players[id].y = y; players[id].z = z;
 
-				printf("move\n");
-
 				sprintf(sendBuffer, "m%i,%f,%f,%f", id, x, y, z);
 
 				for(int j = 0; j < PLAYERS; j++)
