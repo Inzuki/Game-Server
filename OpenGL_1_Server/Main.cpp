@@ -59,6 +59,9 @@ int main(){
 		sprintf(players[i].name, "");
 		players[i].port = 0;
 		players[i].ip   = sf::IpAddress::None;
+		players[i].x    = 0.f;
+		players[i].y    = 0.f;
+		players[i].z    = 0.f;
 	}
 
 	while(true){
@@ -120,11 +123,34 @@ int main(){
 			case '-':{
 				SetConsoleTextAttribute(h, LIGHT_RED),
 				printf("%s has disconnected.\n", players[atoi(buff)].name);
+				
+				// inform other players a user disconnected
+				for(int i = 0; i < PLAYERS; i++){
+					if(i != atoi(buff)){
+						sprintf(sendBuffer, "r%i", i);
+						socket.send(sendBuffer, sizeof(sendBuffer), client, clientPort);
+					}
+				}
 
 				// clear the player's information
 				sprintf(players[atoi(buff)].name, "");
 				players[atoi(buff)].port = 0;
 				players[atoi(buff)].ip   = sf::IpAddress::None;
+			}break;
+			// when a player is moving
+			case 'm':{
+				int id; float x, y, z;
+				sscanf(buff, "%i,%f,%f,%f", &id, &x, &y, &z);
+				players[id].x = x; players[id].y = y; players[id].z = z;
+
+				printf("move\n");
+
+				sprintf(sendBuffer, "m%i,%f,%f,%f", id, x, y, z);
+
+				for(int j = 0; j < PLAYERS; j++)
+					if(j != id)
+						if(players[j].ip != sf::IpAddress::None)
+							socket.send(sendBuffer, sizeof(sendBuffer), players[j].ip, players[j].port);
 			}break;
 
 			// when the packet received from the player is unknown
