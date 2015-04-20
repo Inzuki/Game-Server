@@ -29,7 +29,6 @@ struct Player {
 	char name[1024];
 	unsigned short port;
 	sf::IpAddress ip;
-	float x, y, z;
 };
 
 int main(){
@@ -59,9 +58,6 @@ int main(){
 		sprintf(players[i].name, "");
 		players[i].port = 0;
 		players[i].ip   = sf::IpAddress::None;
-		players[i].x    = 0.f;
-		players[i].y    = 0.f;
-		players[i].z    = 0.f;
 	}
 
 	while(true){
@@ -137,13 +133,24 @@ int main(){
 				players[atoi(buff)].port = 0;
 				players[atoi(buff)].ip   = sf::IpAddress::None;
 			}break;
-			// when a player is moving
+			// when a player begins moving
 			case 'm':{
-				int id; float x, y, z;
-				sscanf(buff, "%i,%f,%f,%f", &id, &x, &y, &z);
-				players[id].x = x; players[id].y = y; players[id].z = z;
+				int id, key; float dirX, dirZ;
+				sscanf(buff, "%i,%i,%f,%f", &id, &key, &dirX, &dirZ);
 
-				sprintf(sendBuffer, "m%i,%f,%f,%f", id, x, y, z);
+				sprintf(sendBuffer, "m%i,%i,%f,%f", id, key, dirX, dirZ);
+
+				for(int j = 0; j < PLAYERS; j++)
+					if(j != id)
+						if(players[j].ip != sf::IpAddress::None)
+							socket.send(sendBuffer, sizeof(sendBuffer), players[j].ip, players[j].port);
+			}break;
+			// when a player stops moving
+			case 's':{
+				int id, key;
+				sscanf(buff, "%i,%i", &id, &key);
+
+				sprintf(sendBuffer, "s%i,%i", id, key);
 
 				for(int j = 0; j < PLAYERS; j++)
 					if(j != id)
@@ -153,7 +160,7 @@ int main(){
 
 			// when the packet received from the player is unknown
 			default:{
-				printf("UNKNOWN PACKET RECEIVED - SIGNAL %c, INFO:\n-> %s\n", buffer[0], buff);
+				printf("UNKNOWN PACKET RECEIVED - SIGNAL [%c], INFO:\n-> %s\n", buffer[0], buff);
 			}break;
 		}
 
