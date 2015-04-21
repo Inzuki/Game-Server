@@ -85,7 +85,7 @@ int main(){
 
 						// display client's information
 						SetConsoleTextAttribute(h, LIGHT_GREEN),
-						printf("%s (%s on port %i) has connected (with ID %i).\n",
+						printf("%s (%s:%i) has connected (ID %i).\n",
 							   players[i].name,
 							   players[i].ip.toString().c_str(),
 							   players[i].port,
@@ -147,10 +147,10 @@ int main(){
 			}break;
 			// when a player stops moving
 			case 's':{
-				int id, key;
-				sscanf(buff, "%i,%i", &id, &key);
+				int id, key; float x, z;
+				sscanf(buff, "%i,%i,%f,%f", &id, &key, &x, &z);
 
-				sprintf(sendBuffer, "s%i,%i", id, key);
+				sprintf(sendBuffer, "s%i,%i,%f,%f", id, key, x, z);
 
 				for(int j = 0; j < PLAYERS; j++)
 					if(j != id)
