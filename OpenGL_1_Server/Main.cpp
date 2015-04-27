@@ -157,11 +157,21 @@ int main(){
 						if(players[j].ip != sf::IpAddress::None)
 							socket.send(sendBuffer, sizeof(sendBuffer), players[j].ip, players[j].port);
 			}break;
+			// when a player changes direction while moving
+			case 'd':{
+				int id; float x, z, dirX, dirZ, rX, rZ;
+				sscanf(buff, "%i,%f,%f,%f,%f,%f,%f", &id, &dirX, &dirZ, &rX, &rZ, &x, &z);
+
+				sprintf(sendBuffer, "d%i,%f,%f,%f,%f,%f,%f", id, dirX, dirZ, rX, rZ, x, z);
+
+				for(int j = 0; j < PLAYERS; j++)
+					if(j != id)
+						if(players[j].ip != sf::IpAddress::None)
+							socket.send(sendBuffer, sizeof(sendBuffer), players[j].ip, players[j].port);
+			}break;
 
 			// when the packet received from the player is unknown
-			default:{
-				printf("UNKNOWN PACKET RECEIVED - SIGNAL [%c], INFO:\n-> %s\n", buffer[0], buff);
-			}break;
+			default:{ printf("UNKNOWN PACKET RECEIVED - SIGNAL [%c], INFO:\n-> %s\n", buffer[0], buff); }break;
 		}
 
 		SetConsoleTextAttribute(h, WHITE);
