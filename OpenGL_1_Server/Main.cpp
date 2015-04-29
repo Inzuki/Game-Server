@@ -169,6 +169,32 @@ int main(){
 						if(players[j].ip != sf::IpAddress::None)
 							socket.send(sendBuffer, sizeof(sendBuffer), players[j].ip, players[j].port);
 			}break;
+			// when a player sends a chat message
+			case 't':{
+				int id; char text[1024];
+				sscanf(buff, "%i,%s", &id, &text);
+				
+				// display message received
+				SetConsoleTextAttribute(h, MAGENTA),
+ 				printf("%s:", players[id].name);
+
+				for(int i = 0; i < 1024; i++)
+					if(text[i] == '☺')
+						text[i] = ' ';
+
+				SetConsoleTextAttribute(h, WHITE),
+				printf(" %s\n", text);
+
+				for(int i = 0; i < 1024; i++)
+					if(text[i] == ' ')
+						text[i] = '☺';
+
+				sprintf(sendBuffer, "t%i,%s", id, text);
+
+				for(int j = 0; j < PLAYERS; j++)
+					if(players[j].ip != sf::IpAddress::None)
+						socket.send(sendBuffer, sizeof(sendBuffer), players[j].ip, players[j].port);
+			}break;
 
 			// when the packet received from the player is unknown
 			default:{ printf("UNKNOWN PACKET RECEIVED - SIGNAL [%c], INFO:\n-> %s\n", buffer[0], buff); }break;
